@@ -1,0 +1,6 @@
+server: irc.freenode.org
+channels: ['#testEF']
+nickname: elfaridroid
+socket_server: 127.0.0.1
+socket_port: 2000
+passphrase: comeGETsome
