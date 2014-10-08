@@ -28,6 +28,12 @@ rescue
   raise
 end
 
+class String
+  def initial
+    self[0,1]
+  end
+end
+
 def ircbot_socket(data)
   begin
     sock = TCPSocket.new $conf['socket_server'], $conf['socket_port']
@@ -40,32 +46,59 @@ def ircbot_socket(data)
 end
 
 def check_passphrase(passphrase)
-  	$logger.info "#{$lh} #{pp}"
   if passphrase == Digest::MD5.hexdigest($conf['passphrase'])
   	return true
   else
   	return false
   end
 end
+
+def sanitize(message)
+  if message.initial == '#' or
+     message.initial == '/' or
+     message.initial == '*'
+     sanitize(message[1..-1])
+  else
+    return message
+  end
+end
  
 $ircbot = IRCBot.new
 
+get '/' do
+  status 200 # OK
+  body '{ "STATUS": "OK" }'
+end
+
 get '/status' do
-  if ircbot_socket("PING#PING")
+  if ircbot_socket("PING*PING")
     status 200 # OK
     body ''
   else
-  	status 503 # Internal error
+  	status 503 # Service Unavailable
     body '{ "ERROR": "Service unavailable" }'
   end
 end
  
-post '/send/:passphrase' do
+post '/send/:user/:passphrase' do
   if check_passphrase(params[:passphrase])
-    puts params[:data]
-    status 202 # Accepted
-    body ''
+    $logger.info "New message from #{params[:user]} : #{params[:data]}"
+    if not params[:data].nil?
+      sleep(2)
+      message = sanitize(params[:data])
+      if ircbot_socket("MSG*#{message} - ha dicho #{params[:user]}")
+        status 202 # Accepted
+        body ''
+      else
+        status 503 # Service Unavailable
+        body ''
+      end
+    else
+      status 204 # Empty
+      body ''
+    end
   else
+    $logger.error "Wrong passphrase from #{params[:user]}"
   	status 401 # Unauthorized
   	body '{ "ERROR" : "Bad passphrase" }'
   end

@@ -48,8 +48,7 @@ class IRCBot
           c.server = $conf['server']
           c.channels = $conf['channels']        
           c.nick = $conf['nickname']
-          c.plugins.plugins = [IRCMessenger]
-          c.plugins.plugins = [IRCPing]
+          c.plugins.plugins = [IRCMessenger , IRCPing]
         end
       end
       $logger.info "#{$lh} Bot initialized successfully"
@@ -65,7 +64,8 @@ class IRCBot
       server = TCPServer.new $conf['socket_server'], $conf['socket_port']
       loop do
         Thread.start(server.accept) do |client|
-          listener,message = client.gets.split('#',2)
+          listener,message = client.gets.split('*',2)
+          $logger.info "New socket message TYPE: #{listener} - MESSAGE: #{message}"
           case listener
             when 'PING'
               bot.handlers.dispatch(:ping_msg, nil, message)
