@@ -81,26 +81,33 @@ get '/status' do
 end
  
 post '/send/:user/:passphrase' do
-  if check_passphrase(params[:passphrase])
-    $logger.info "New message from #{params[:user]} : #{params[:data]}"
-    if not params[:data].nil?
-      sleep(2)
-      message = sanitize(params[:data])
-      if ircbot_socket("MSG*#{message} - ha dicho #{params[:user]}")
-        status 202 # Accepted
-        body ''
+  begin
+    if check_passphrase(params[:passphrase])
+      $logger.info "New message from #{params[:user]} : #{params[:data]}"
+      if not params[:data].nil?
+        message = sanitize(params[:data])
+        ircbot_socket("MSG*#{params[:user]} dice:")
+        sleep(2)
+        if ircbot_socket("MSG*#{message}")
+          status 202 # Accepted
+          body ''
+        else
+          status 503 # Service Unavailable
+          body ''
+        end
       else
-        status 503 # Service Unavailable
+        status 204 # Empty
         body ''
       end
     else
-      status 204 # Empty
-      body ''
+      $logger.error "Wrong passphrase from #{params[:user]}"
+    	status 401 # Unauthorized
+    	body '{ "ERROR" : "Bad passphrase" }'
     end
-  else
-    $logger.error "Wrong passphrase from #{params[:user]}"
-  	status 401 # Unauthorized
-  	body '{ "ERROR" : "Bad passphrase" }'
+  rescue => e
+    $logger.error "ERROR: #{e}"
+    status 503 # Unauthorized
+    body '{ "ERROR" : "Something really ugly happened" }'
   end
 end
 
