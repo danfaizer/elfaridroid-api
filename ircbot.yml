@@ -1,4 +1,5 @@
 server: irc.freenode.org
+schannels: ['#testEF']
 channels: ['#testEF']
 nickname: elfaridroid
 socket_server: 127.0.0.1

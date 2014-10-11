@@ -46,7 +46,7 @@ class IRCBot
       @bot = Cinch::Bot.new do
         configure do |c|
           c.server = $conf['server']
-          c.channels = $conf['channels']        
+          c.channels = $conf['schannels']        
           c.nick = $conf['nickname']
           c.plugins.plugins = [IRCMessenger , IRCPing]
         end
